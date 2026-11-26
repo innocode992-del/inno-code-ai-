@@ -140,7 +140,11 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model,
-        input: buildConversation(messages),
+        // Stateless Interactions requests must use an array of typed steps.
+        input: [{
+          type: 'user_input',
+          content: buildConversation(messages),
+        }],
         store: false,
       }),
       signal: controller.signal,
@@ -163,6 +167,11 @@ export default async function handler(req, res) {
 
   if (!upstream.ok) {
     const apiMessage = typeof data?.error?.message === 'string' ? data.error.message : '';
+    // Log only the provider status and message; never log the API key or request headers.
+    console.error('Gemini API request failed', {
+      status: upstream.status,
+      message: apiMessage.slice(0, 500),
+    });
     let friendly = 'حصل خطأ من Gemini. راجع إعدادات Gemini API وحاول تاني.';
 
     if (upstream.status === 400 && /model/i.test(apiMessage)) {
