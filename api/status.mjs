@@ -1,18 +1,23 @@
-export default async function handler(request) {
-  if (request.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'الطريقة دي مش مدعومة.' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
-    });
+/**
+ * Inno Code - Vercel Node.js Function
+ * GET /api/status
+ */
+export default function handler(req, res) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET');
+    return res.status(405).json({ error: 'الطريقة دي مش مدعومة.' });
   }
-  const key = process.env.OPENAI_API_KEY || '';
-  const configured = Boolean(key && !key.includes('PASTE_') && key !== 'your_api_key_here');
-  return new Response(JSON.stringify({ configured, model: process.env.OPENAI_MODEL || 'gpt-6.2-sol' }), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-      'X-Content-Type-Options': 'nosniff',
-    },
+
+  const apiKey = process.env.OPENAI_API_KEY || '';
+  const configured = Boolean(
+    apiKey &&
+    !apiKey.includes('PASTE_') &&
+    apiKey !== 'your_api_key_here'
+  );
+
+  res.setHeader('Cache-Control', 'no-store');
+  return res.status(200).json({
+    configured,
+    model: process.env.OPENAI_MODEL || 'gpt-6.2-astra',
   });
 }
