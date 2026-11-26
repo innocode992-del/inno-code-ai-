@@ -1,14 +1,15 @@
 /**
  * Inno Code - Vercel Node.js Function
  * POST /api/chat
- * Uses the OpenAI Responses API. Keep OPENAI_API_KEY in Vercel Environment Variables.
+ * Gemini Developer API (Google AI Studio). Keep GEMINI_API_KEY in Vercel Environment Variables.
  */
 
-const DEFAULT_MODEL = 'gpt-6.2-astra';
+const DEFAULT_MODEL = 'gemini-3.8-flash';
 const MAX_BODY_BYTES = 160_000;
-const MAX_MESSAGES = 24;
-const MAX_MESSAGE_CHARS = 10_000;
-const OPENAI_TIMEOUT_MS = 45_000;
+const MAX_MESSAGES = 18;
+const MAX_MESSAGE_CHARS = 6_000;
+const MAX_TOTAL_CHARS = 24_000;
+const GEMINI_TIMEOUT_MS = 45_000;
 
 function sendJson(res, status, payload) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -18,16 +19,13 @@ function sendJson(res, status, payload) {
 }
 
 async function readRequestBody(req) {
-  // Vercel's Node.js runtime normally parses application/json into req.body.
   if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
     return req.body;
   }
-
   if (typeof req.body === 'string') {
     return JSON.parse(req.body || '{}');
   }
 
-  // Fallback for an unparsed request stream.
   const chunks = [];
   let total = 0;
   for await (const chunk of req) {
@@ -40,28 +38,40 @@ async function readRequestBody(req) {
     }
     chunks.push(buffer);
   }
-
-  const raw = Buffer.concat(chunks).toString('utf8');
-  return JSON.parse(raw || '{}');
+  return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 }
 
-function extractOutputText(data) {
+function extractGeminiText(data) {
   if (typeof data?.output_text === 'string' && data.output_text.trim()) {
     return data.output_text.trim();
   }
 
-  const pieces = [];
-  for (const item of Array.isArray(data?.output) ? data.output : []) {
-    if (item?.type !== 'message' || !Array.isArray(item.content)) continue;
-    for (const part of item.content) {
-      if (part?.type === 'output_text' && typeof part.text === 'string') {
-        pieces.push(part.text);
-      } else if (part?.type === 'refusal' && typeof part.refusal === 'string') {
-        pieces.push(part.refusal);
+  const parts = [];
+  for (const step of Array.isArray(data?.steps) ? data.steps : []) {
+    if (step?.type !== 'model_output' || !Array.isArray(step.content)) continue;
+    for (const item of step.content) {
+      if (item?.type === 'text' && typeof item.text === 'string') {
+        parts.push(item.text);
       }
     }
   }
-  return pieces.join('\n').trim();
+  return parts.join('\n').trim();
+}
+
+function buildConversation(messages) {
+  const systemPrompt = [
+    'أنت Inno Code، مساعد ذكي وودود للمحادثة بالكتابة فقط.',
+    'أجب بلغة المستخدم، واستخدم اللهجة المصرية بشكل طبيعي عندما يكتب المستخدم بالعربية المصرية.',
+    'كن واضحًا ومفيدًا، ولا تدّعِ أنك نفذت شيئًا لم تنفذه.',
+    'لا تستخدم الصوت أو تطلب من المستخدم إرسال تسجيل صوتي.',
+  ].join('\n');
+
+  const transcript = messages.map((message) => {
+    const speaker = message.role === 'assistant' ? 'Inno Code' : 'المستخدم';
+    return `${speaker}: ${message.content}`;
+  }).join('\n\n');
+
+  return `${systemPrompt}\n\nسياق المحادثة:\n${transcript}\n\nInno Code:`;
 }
 
 export default async function handler(req, res) {
@@ -70,10 +80,10 @@ export default async function handler(req, res) {
     return sendJson(res, 405, { error: 'الطريقة دي مش مدعومة.' });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey.includes('PASTE_') || apiKey === 'your_api_key_here') {
     return sendJson(res, 503, {
-      error: 'مفتاح OpenAI API مش متضاف في Vercel Environment Variables.',
+      error: 'مفتاح Gemini مش متضاف. أضف GEMINI_API_KEY في Vercel Environment Variables.',
     });
   }
 
@@ -107,41 +117,39 @@ export default async function handler(req, res) {
   }).filter(Boolean);
 
   if (!messages.length || messages[messages.length - 1].role !== 'user') {
-    return sendJson(res, 400, {
-      error: 'آخر رسالة لازم تكون رسالة من المستخدم.',
-    });
+    return sendJson(res, 400, { error: 'آخر رسالة لازم تكون رسالة من المستخدم.' });
   }
 
-  const model = process.env.OPENAI_MODEL || DEFAULT_MODEL;
+  let totalChars = 0;
+  for (const message of messages) totalChars += message.content.length;
+  while (messages.length > 1 && totalChars > MAX_TOTAL_CHARS) {
+    totalChars -= messages.shift().content.length;
+  }
+
+  const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
 
   let upstream;
   try {
-    upstream = await fetch('https://api.openai.com/v1/responses', {
+    upstream = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        'x-goog-api-key': apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model,
-        instructions: 'أنت Inno Code، مساعد ذكي وودود. أجب بلغة المستخدم، واستخدم اللهجة المصرية بشكل طبيعي عندما يكتب المستخدم بالعربية المصرية. كن واضحًا ومفيدًا. هذا التطبيق للكتابة فقط ولا تستخدم الصوت.',
-        input: messages,
-        max_output_tokens: 1200,
+        input: buildConversation(messages),
         store: false,
       }),
       signal: controller.signal,
     });
   } catch (error) {
     if (error?.name === 'AbortError') {
-      return sendJson(res, 504, {
-        error: 'الرد اتأخر من خدمة OpenAI. جرّب تبعت رسالتك تاني.',
-      });
+      return sendJson(res, 504, { error: 'Gemini اتأخر في الرد. جرّب تاني بعد شوية.' });
     }
-    return sendJson(res, 502, {
-      error: 'مش قادر أوصل لخدمة OpenAI. اتأكد من الاتصال وحاول تاني.',
-    });
+    return sendJson(res, 502, { error: 'مش قادر أوصل لخدمة Gemini. جرّب تاني.' });
   } finally {
     clearTimeout(timeout);
   }
@@ -150,34 +158,32 @@ export default async function handler(req, res) {
   try {
     data = await upstream.json();
   } catch {
-    return sendJson(res, 502, {
-      error: 'وصل رد غير مفهوم من خدمة OpenAI. جرّب تاني.',
-    });
+    return sendJson(res, 502, { error: 'وصل رد غير مفهوم من Gemini. جرّب تاني.' });
   }
 
   if (!upstream.ok) {
-    const apiMessage = typeof data?.error?.message === 'string'
-      ? data.error.message
-      : '';
-    let friendly = 'حصل خطأ من OpenAI. راجع إعدادات حساب API وحاول تاني.';
+    const apiMessage = typeof data?.error?.message === 'string' ? data.error.message : '';
+    let friendly = 'حصل خطأ من Gemini. راجع إعدادات Gemini API وحاول تاني.';
 
-    if (upstream.status === 401) {
-      friendly = 'مفتاح API غير صحيح أو اتلغى. راجعه في Vercel Environment Variables.';
+    if (upstream.status === 400 && /model/i.test(apiMessage)) {
+      friendly = `الموديل (${model}) مش متاح للمفتاح ده. راجع اسم الموديل في GEMINI_MODEL.`;
+    } else if (upstream.status === 400) {
+      friendly = 'Gemini رفض صيغة الطلب. جرّب تاني أو راجع إعدادات المشروع.';
+    } else if (upstream.status === 401 || upstream.status === 403) {
+      friendly = 'مفتاح Gemini غير صحيح أو غير مفعّل للمشروع. راجعه في Vercel.';
     } else if (upstream.status === 429) {
-      friendly = 'طلبات كتير أو مفيش رصيد/حد استخدام متاح. راجع Usage وBilling في حساب API.';
-    } else if (upstream.status === 400 && /model/i.test(apiMessage)) {
-      friendly = `الموديل المحدد (${model}) مش متاح للمفتاح ده. غيّر OPENAI_MODEL لموديل متاح في حسابك.`;
+      friendly = 'وصلت لحد الطلبات المجاني في Gemini حاليًا. جرّب بعد ما الحد يتجدد.';
+    } else if (upstream.status >= 500) {
+      friendly = 'خدمة Gemini فيها مشكلة مؤقتة. جرّب تاني بعد شوية.';
     }
 
     return sendJson(res, 502, { error: friendly });
   }
 
-  const reply = extractOutputText(data);
+  const reply = extractGeminiText(data);
   if (!reply) {
-    return sendJson(res, 502, {
-      error: 'وصل رد من OpenAI لكن مفيهوش نص قابل للعرض.',
-    });
+    return sendJson(res, 502, { error: 'Gemini رجّع رد من غير نص قابل للعرض.' });
   }
 
-  return sendJson(res, 200, { reply, model });
+  return sendJson(res, 200, { reply, model, provider: 'Gemini' });
 }
