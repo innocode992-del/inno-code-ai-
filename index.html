@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f8f9fc" />
+  <meta name="description" content="Inno Code — مساعدك الذكي بالكتابة." />
+  <title>Inno Code</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="mobile-scrim" id="mobileScrim"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <a class="brand" href="#" aria-label="Inno Code home">
+          <span class="brand-logo"><span>IN</span><i></i></span>
+          <span class="brand-wordmark">Inno<span>Code</span></span>
+        </a>
+        <button class="icon-btn sidebar-collapse" id="closeSidebar" aria-label="إغلاق القائمة" title="إغلاق">×</button>
+      </div>
+
+      <button class="new-chat" id="newChatBtn">
+        <span class="new-chat-symbol">＋</span>
+        <span>محادثة جديدة</span>
+        <kbd>Ctrl K</kbd>
+      </button>
+
+      <div class="sidebar-section-label"><span>مساحة العمل</span></div>
+      <button class="nav-item active" id="homeNav"><span class="nav-icon">⌂</span><span>الرئيسية</span></button>
+      <button class="nav-item" id="searchNav"><span class="nav-icon">⌕</span><span>البحث في المحادثات</span><span class="nav-shortcut">⌘ F</span></button>
+
+      <div class="history-head">
+        <span>الأخيرة</span>
+        <button class="tiny-icon-btn" id="historyMenuBtn" title="مسح المحادثات" aria-label="مسح المحادثات">···</button>
+      </div>
+      <div class="history-list" id="historyList">
+        <div class="history-empty">محادثاتك الجديدة هتظهر هنا</div>
+      </div>
+
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-bottom">
+        <div class="upgrade-card">
+          <div class="upgrade-icon">✦</div>
+          <div class="upgrade-copy"><strong>فكّر بشكل أكبر</strong><span>مساحة واحدة لكل أفكارك</span></div>
+          <span class="upgrade-arrow">↗</span>
+        </div>
+        <button class="account-row" id="settingsBtn">
+          <span class="account-avatar">IC</span>
+          <span class="account-copy"><strong>Inno Code</strong><small>الإعدادات والتخصيص</small></span>
+          <span class="account-dots">···</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-leading">
+          <button class="icon-btn mobile-menu" id="openSidebar" aria-label="فتح القائمة">☰</button>
+          <div class="mobile-wordmark"><span class="mini-logo">IN</span> Inno Code</div>
+          <button class="model-switch" id="modelSwitch" aria-label="اختيار المساعد">
+            <span class="model-glyph">✳</span><span>Inno AI</span><span class="model-chevron">⌄</span>
+          </button>
+        </div>
+        <div class="topbar-trailing">
+          <span class="design-status" id="connectionStatus"><i></i> جاري فحص الاتصال...</span>
+          <button class="icon-btn theme-toggle" id="themeBtn" aria-label="تغيير المظهر" title="تغيير المظهر"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.64 5.64l1.42 1.42m9.88 9.88 1.42 1.42m0-12.72-1.42 1.42m-9.88 9.88-1.42 1.42"/><circle cx="12" cy="12" r="4"/></svg></button>
+        </div>
+      </header>
+
+      <section class="conversation" id="conversation">
+        <div class="welcome" id="welcome">
+          <div class="welcome-orb"><span class="orb-logo">IN</span><span class="orb-spark">✦</span></div>
+          <div class="welcome-eyebrow">YOUR IDEAS, IN MOTION</div>
+          <h1>أهلاً بيك في <span>Inno Code</span></h1>
+          <p class="welcome-copy">مساحة ذكية لأفكارك. ابدأ بسؤال، أو احكيلي إيه اللي في دماغك.</p>
+
+          <div class="suggestions">
+            <button class="suggestion" data-prompt="ساعدني أبدأ مشروع جديد من الصفر.">
+              <span class="suggestion-icon icon-purple"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg></span>
+              <span class="suggestion-text"><strong>ابدأ مشروع جديد</strong><small>حوّل الفكرة لخطة واضحة</small></span><span class="suggestion-arrow">↗</span>
+            </button>
+            <button class="suggestion" data-prompt="اشرح لي موضوعًا صعبًا بطريقة بسيطة وبأمثلة.">
+              <span class="suggestion-icon icon-blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 1 1 4.3 1.7c-1.2 1.1-1.9 1.5-1.9 3.3M12 17.5h.01"/></svg></span>
+              <span class="suggestion-text"><strong>اشرح لي حاجة</strong><small>ببساطة ومن غير تعقيد</small></span><span class="suggestion-arrow">↗</span>
+            </button>
+            <button class="suggestion" data-prompt="اكتب لي صفحة ويب عصرية باستخدام HTML وCSS.">
+              <span class="suggestion-icon icon-orange"><svg viewBox="0 0 24 24"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-2-13-4 16"/></svg></span>
+              <span class="suggestion-text"><strong>ساعدني في البرمجة</strong><small>اكتب كود واطوّر أفكارك</small></span><span class="suggestion-arrow">↗</span>
+            </button>
+            <button class="suggestion" data-prompt="اقترح لي أفكارًا إبداعية ومختلفة لمشروع أو محتوى.">
+              <span class="suggestion-icon icon-green"><svg viewBox="0 0 24 24"><path d="m12 2 1.7 6.3L20 10l-6.3 1.7L12 18l-1.7-6.3L4 10l6.3-1.7L12 2Zm7 13 .8 3.2L23 19l-3.2.8L19 23l-.8-3.2L15 19l3.2-.8L19 15Z"/></svg></span>
+              <span class="suggestion-text"><strong>طلّع أفكار جديدة</strong><small>إلهام وزوايا مختلفة</small></span><span class="suggestion-arrow">↗</span>
+            </button>
+          </div>
+          <div class="welcome-note"><span>✧</span> مساعد كتابة فقط — بدون صوت أو ميكروفون</div>
+        </div>
+
+        <div class="messages" id="messages" aria-live="polite"></div>
+      </section>
+
+      <footer class="composer-wrap">
+        <form class="composer" id="chatForm">
+          <textarea id="messageInput" rows="1" maxlength="12000" placeholder="اكتب رسالتك لـ Inno Code..." aria-label="اكتب رسالتك"></textarea>
+          <div class="composer-bottom">
+            <div class="composer-meta"><span class="text-only"><span>✦</span> كتابة فقط</span><span class="meta-divider"></span><span class="privacy-label">مساحة خاصة لأفكارك</span></div>
+            <div class="composer-actions"><span class="enter-hint">Enter للإرسال · Shift + Enter لسطر جديد</span><button class="send-btn" id="sendBtn" type="submit" disabled aria-label="إرسال"><svg viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button></div>
+          </div>
+        </form>
+        <p class="footer-disclaimer">Inno Code ممكن يخطئ أحيانًا. راجع المعلومات المهمة قبل الاعتماد عليها.</p>
+      </footer>
+    </main>
+  </div>
+
+  <div class="modal-layer" id="settingsModal" aria-hidden="true">
+    <section class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="settings-top"><div><span class="settings-kicker">PERSONALIZE</span><h2 id="settingsTitle">إعدادات Inno Code</h2></div><button class="icon-btn" id="closeSettings" aria-label="إغلاق">×</button></div>
+      <div class="settings-block"><div class="settings-block-title">المظهر</div><p>اختار الشكل المريح ليك.</p>
+        <div class="theme-choices">
+          <button class="theme-choice" data-theme-choice="light"><span class="theme-thumb light-thumb"><i></i><b></b></span><strong>فاتح</strong><span class="choice-check">✓</span></button>
+          <button class="theme-choice" data-theme-choice="dark"><span class="theme-thumb dark-thumb"><i></i><b></b></span><strong>داكن</strong><span class="choice-check">✓</span></button>
+        </div>
+      </div>
+      <div class="settings-block info-block"><div class="settings-info-icon">✦</div><div><strong>Inno Code — اتصال آمن</strong><p>مفتاح API بيتحفظ كمتغير سري على Vercel، ومش بيتحط في كود المتصفح.</p></div></div>
+      <div class="settings-footer"><button class="clear-btn" id="clearChats">مسح المحادثات</button><button class="done-btn" id="doneSettings">تم</button></div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/assets/app.js"></script>
+</body>
+</html>

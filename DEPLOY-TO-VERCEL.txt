@@ -1,0 +1,7 @@
+ارفع محتويات هذا المجلد إلى جذر مستودع GitHub المرتبط بـ Vercel.
+ثم في Vercel: Settings > Environment Variables أضف:
+OPENAI_API_KEY = مفتاحك السري
+OPENAI_MODEL = gpt-6.2-sol
+احفظ ثم اعمل Redeploy لآخر Deployment.
+لا تشغّل أي ملف BAT، ولا تضع المفتاح في ملفات HTML أو JavaScript.
+راجع README-AR.md للتفاصيل والتنبيه الأمني قبل مشاركة الموقع.
