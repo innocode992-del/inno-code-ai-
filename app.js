@@ -13,7 +13,8 @@
     welcome: $('welcome'), messages: $('messages'), form: $('chatForm'), input: $('messageInput'), send: $('sendBtn'),
     settings: $('settingsModal'), toast: $('toast'), status: $('connectionStatus'),
     attachButton: $('attachButton'), attachmentMenu: $('attachmentMenu'), fileInput: $('fileInput'),
-    attachmentTray: $('attachmentTray'), micButton: $('micButton')
+    attachmentTray: $('attachmentTray'), micButton: $('micButton'),
+    recordingStatus: $('recordingStatus'), recordingStatusText: $('recordingStatusText'), stopRecordingButton: $('stopRecordingButton')
   };
 
   let chats = read(KEYS.chats, []);
@@ -132,9 +133,9 @@
       const speakButton = addButton(actions, '🔊 قراءة', () => toggleSpeech(content, speakButton), 'قراءة الرد بصوت عربي');
       speakButton.classList.add('speech-toggle');
       addButton(actions, 'إيقاف الصوت', stopSpeech, 'إيقاف القراءة الصوتية');
-      addButton(actions, 'TXT', () => downloadText(content, 'inno-code-reply.txt'), 'تنزيل الرد كملف نصي');
-      addButton(actions, 'DOCX', () => downloadDocx(content, 'inno-code-reply.docx'), 'تنزيل الرد كمستند Word');
-      addButton(actions, 'PDF', () => printAsPdf(content), 'فتح نافذة الطباعة لاختيار حفظ PDF');
+      addButton(actions, '⬇ تنزيل TXT', () => downloadText(content, 'inno-code-reply.txt'), 'تنزيل الرد كملف نصي');
+      addButton(actions, '⬇ تنزيل Word', () => downloadDocx(content, 'inno-code-reply.docx'), 'تنزيل الرد كمستند Word');
+      addButton(actions, 'حفظ PDF', () => printAsPdf(content), 'فتح نافذة الطباعة لاختيار حفظ PDF');
       const blocks = getCodeBlocks(content);
       blocks.forEach((block, index) => {
         const filename = `inno-code-${index + 1}.${block.extension}`;
@@ -240,6 +241,7 @@
     }
     ui.fileInput.value = '';
     ui.attachmentMenu.hidden = true;
+    ui.attachButton.setAttribute('aria-expanded', 'false');
     renderPendingFiles();
   }
   function fileToBase64(file) {
@@ -334,56 +336,104 @@
     ui.send.disabled = !ui.input.value.trim() && pendingFiles.length === 0;
   }
 
-  // Browser speech recognition: speech is transcribed locally by the browser service;
-  // the user reviews the text before the normal chat form submits it.
-  function stopRecording() {
-    if (recognition && isRecording) recognition.stop();
+  // Speech recognition is started only from the user's tap. Text stays in the composer for review.
+  let recordingBaseText = '';
+  let recordingFinalText = '';
+  let recordingHadError = false;
+
+  function resetRecordingUI() {
     isRecording = false;
     ui.micButton.classList.remove('recording');
-    ui.micButton.textContent = '🎙️';
-    ui.micButton.title = 'تحويل الكلام إلى نص';
+    ui.micButton.innerHTML = '<span class="tool-symbol" aria-hidden="true">🎙️</span><span class="tool-label">تسجيل</span>';
+    ui.micButton.setAttribute('aria-label', 'ابدأ تسجيل الكلام وتحويله إلى نص');
+    ui.micButton.title = 'ابدأ تسجيل الكلام وتحويله إلى نص';
+    ui.recordingStatus.hidden = true;
   }
+
+  function stopRecording() {
+    const current = recognition;
+    if (current && isRecording) {
+      try { current.stop(); } catch { /* It may already have stopped. */ }
+    }
+    resetRecordingUI();
+  }
+
   function startRecording() {
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Recognition) {
-      showToast('الميكروفون غير مدعوم في المتصفح ده. جرّب Chrome أو Edge.');
+    if (isRecording) { stopRecording(); return; }
+    if (!window.isSecureContext) {
+      showToast('لازم تفتح Inno Code من رابط HTTPS عشان المتصفح يسمح باستخدام الميكروفون.', 6000);
       return;
     }
-    if (isRecording) { stopRecording(); return; }
+
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) {
+      showToast('المتصفح ده لا يدعم تحويل الكلام إلى نص من داخل الموقع. جرّب Chrome على Android، أو استخدم ميكروفون لوحة مفاتيح الموبايل.', 7500);
+      return;
+    }
+
     try {
-      recognition = new Recognition();
-      recognition.lang = 'ar-EG';
-      recognition.interimResults = true;
-      recognition.continuous = false;
-      const baseText = ui.input.value.trim();
-      recognition.onstart = () => {
+      const current = new Recognition();
+      recognition = current;
+      recordingBaseText = ui.input.value.trim();
+      recordingFinalText = '';
+      recordingHadError = false;
+      current.lang = 'ar-EG';
+      current.interimResults = true;
+      current.continuous = true;
+      current.maxAlternatives = 1;
+
+      current.onstart = () => {
         isRecording = true;
         ui.micButton.classList.add('recording');
-        ui.micButton.textContent = '■';
+        ui.micButton.innerHTML = '<span class="tool-symbol" aria-hidden="true">■</span><span class="tool-label">إيقاف</span>';
+        ui.micButton.setAttribute('aria-label', 'إيقاف التسجيل');
         ui.micButton.title = 'إيقاف التسجيل';
-        showToast('اتكلم دلوقتي… اضغط الزر لإيقاف التسجيل.');
+        ui.recordingStatus.hidden = false;
+        ui.recordingStatusText.textContent = 'جاري الاستماع بالعربية… اتكلم دلوقتي';
+        showToast('بدأ التسجيل. اتكلم، ثم اضغط «إيقاف» لمراجعة النص.', 5000);
       };
-      recognition.onresult = event => {
-        let finalText = '';
-        let interimText = '';
-        for (let i = 0; i < event.results.length; i++) {
-          const phrase = event.results[i][0].transcript;
-          if (event.results[i].isFinal) finalText += phrase;
-          else interimText += phrase;
+
+      current.onresult = event => {
+        let interim = '';
+        for (let index = event.resultIndex; index < event.results.length; index++) {
+          const result = event.results[index];
+          const phrase = result?.[0]?.transcript || '';
+          if (result.isFinal) recordingFinalText += `${phrase} `;
+          else interim += phrase;
         }
-        const combined = [baseText, finalText, interimText].filter(Boolean).join(' ').trim();
-        ui.input.value = combined;
+        const recognized = [recordingBaseText, recordingFinalText.trim(), interim.trim()].filter(Boolean).join(' ').trim();
+        ui.input.value = recognized;
         resizeInput();
+        ui.recordingStatusText.textContent = interim.trim() ? `سمعت: ${interim.trim()}` : 'جاري الاستماع… تقدر تكمل كلامك';
       };
-      recognition.onerror = event => {
-        const messages = { 'not-allowed': 'اسمح للمتصفح باستخدام الميكروفون من إعدادات الموقع.', 'no-speech': 'ملقتش كلام واضح. جرّب تاني.', 'audio-capture': 'مش لاقي ميكروفون متصل بالجهاز.' };
-        if (messages[event.error]) showToast(messages[event.error]);
+
+      current.onerror = event => {
+        recordingHadError = true;
+        const errors = {
+          'not-allowed': 'إذن الميكروفون مرفوض. افتح إعدادات الموقع واسمح باستخدام الميكروفون.',
+          'service-not-allowed': 'خدمة تحويل الكلام غير مسموح بها في إعدادات المتصفح.',
+          'no-speech': 'لم أسمع كلامًا. اضغط تسجيل وابدأ الكلام بالقرب من الميكروفون.',
+          'audio-capture': 'لم أجد ميكروفونًا متصلًا أو متاحًا للجهاز.',
+          'network': 'خدمة التعرف على الكلام تحتاج اتصال إنترنت. تحقق من الاتصال وحاول مرة أخرى.',
+          'aborted': 'تم إيقاف التسجيل.'
+        };
+        showToast(errors[event.error] || `تعذر تحويل الكلام (${event.error || 'خطأ غير معروف'}). راجع إذن الميكروفون وحاول مجددًا.`, 7000);
       };
-      recognition.onend = () => stopRecording();
-      recognition.start();
-    } catch {
-      stopRecording();
-      showToast('تعذر بدء الميكروفون. راجع إذن الميكروفون واتصال الموقع الآمن.');
+
+      current.onend = () => {
+        const gotText = ui.input.value.trim() && ui.input.value.trim() !== recordingBaseText;
+        if (recognition === current) recognition = null;
+        resetRecordingUI();
+        if (gotText && !recordingHadError) {
+          showToast('تم تحويل كلامك إلى نص. راجعه وعدّله ثم اضغط إرسال.', 5000);
+        }
+      };
+
+      current.start();
+    } catch (error) {
+      recognition = null;
+      resetRecordingUI();
+      showToast('تعذر بدء التسجيل. تأكد من إذن الميكروفون واستخدم Chrome أو Edge من رابط HTTPS.', 7000);
     }
   }
 
@@ -550,7 +600,11 @@
   ui.scrim.addEventListener('click', closeSidebar);
   $('modelSwitch').addEventListener('click', () => showToast('موديل المحادثة الحالي يُدار من إعدادات Vercel. توليد الصور غير مفعّل لتجنب أي تكلفة دون موافقتك.'));
 
-  ui.attachButton.addEventListener('click', () => { ui.attachmentMenu.hidden = !ui.attachmentMenu.hidden; });
+  ui.attachButton.addEventListener('click', () => {
+    ui.attachmentMenu.hidden = !ui.attachmentMenu.hidden;
+    ui.attachButton.setAttribute('aria-expanded', String(!ui.attachmentMenu.hidden));
+    if (!ui.attachmentMenu.hidden) showToast('اختار نوع الملف من القائمة اللي ظهرت.');
+  });
   ui.attachmentMenu.addEventListener('click', event => {
     const choice = event.target.closest('[data-file-kind]');
     if (!choice) return;
@@ -562,8 +616,9 @@
     ui.fileInput.click();
   });
   ui.fileInput.addEventListener('change', event => acceptFiles(event.target.files));
+  ui.stopRecordingButton.addEventListener('click', stopRecording);
   document.addEventListener('click', event => {
-    if (!ui.attachmentMenu.hidden && !event.target.closest('.attachment-tools')) ui.attachmentMenu.hidden = true;
+    if (!ui.attachmentMenu.hidden && !event.target.closest('.attachment-tools')) { ui.attachmentMenu.hidden = true; ui.attachButton.setAttribute('aria-expanded', 'false'); }
   });
   ui.micButton.addEventListener('click', startRecording);
 

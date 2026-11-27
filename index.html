@@ -76,6 +76,7 @@
         </div>
         <div class="topbar-trailing">
           <span class="design-status" id="connectionStatus"><i></i> جاري فحص الاتصال...</span>
+          <button class="install-top-button" id="installTopBtn" type="button" aria-label="تثبيت Inno Code على الجهاز" title="تثبيت التطبيق"><span aria-hidden="true">⇩</span><b>تثبيت التطبيق</b></button>
           <button class="icon-btn theme-toggle" id="themeBtn" aria-label="تغيير المظهر" title="تغيير المظهر"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.64 5.64l1.42 1.42m9.88 9.88 1.42 1.42m0-12.72-1.42 1.42m-9.88 9.88-1.42 1.42"/><circle cx="12" cy="12" r="4"/></svg></button>
         </div>
       </header>
@@ -105,7 +106,7 @@
               <span class="suggestion-text"><strong>طلّع أفكار جديدة</strong><small>إلهام وزوايا مختلفة</small></span><span class="suggestion-arrow">↗</span>
             </button>
           </div>
-          <div class="welcome-note"><span>✧</span> اسأل، ارفع صورة أو ملف، أو استخدم الميكروفون لتحويل كلامك إلى نص</div>
+          <div class="welcome-note"><span>✧</span> استخدم «إرفاق» لإضافة صورة أو ملف، أو «تسجيل» لتحويل كلامك إلى نص ثم مراجعته قبل الإرسال</div>
         </div>
 
         <div class="messages" id="messages" aria-live="polite"></div>
@@ -114,13 +115,18 @@
       <footer class="composer-wrap">
         <form class="composer" id="chatForm">
           <div class="attachment-tray" id="attachmentTray" hidden></div>
+          <div class="recording-status" id="recordingStatus" hidden aria-live="polite">
+            <span class="recording-dot" aria-hidden="true"></span>
+            <span id="recordingStatusText">جاري الاستماع… اتكلم دلوقتي</span>
+            <button class="stop-recording-button" id="stopRecordingButton" type="button">إيقاف التسجيل</button>
+          </div>
           <textarea id="messageInput" rows="1" maxlength="12000" placeholder="اكتب رسالتك لـ Inno Code..." aria-label="اكتب رسالتك"></textarea>
           <div class="composer-bottom">
             <div class="composer-meta"><span class="text-only"><span>✦</span> مساعدك الذكي</span><span class="meta-divider"></span><span class="privacy-label">المرفقات تُرسل إلى Gemini لتحليلها</span></div>
             <div class="composer-actions">
               <span class="enter-hint">Enter للإرسال · Shift + Enter لسطر جديد</span>
               <div class="attachment-tools">
-                <button class="tool-btn" id="attachButton" type="button" aria-label="إضافة مرفق" title="إضافة صورة أو ملف">＋</button>
+                <button class="tool-btn labeled-tool" id="attachButton" type="button" aria-label="إرفاق صورة أو ملف" aria-expanded="false" aria-controls="attachmentMenu" title="إرفاق صورة أو ملف"><span class="tool-symbol" aria-hidden="true">＋</span><span class="tool-label">إرفاق</span></button>
                 <div class="attachment-menu" id="attachmentMenu" hidden>
                   <button type="button" data-file-kind="image">🖼️ رفع صورة</button>
                   <button type="button" data-file-kind="pdf">📕 رفع PDF</button>
@@ -129,7 +135,7 @@
                 </div>
               </div>
               <input id="fileInput" type="file" hidden multiple />
-              <button class="tool-btn" id="micButton" type="button" aria-label="تحويل الكلام إلى نص" title="تحويل الكلام إلى نص">🎙️</button>
+              <button class="tool-btn labeled-tool mic-tool" id="micButton" type="button" aria-label="ابدأ تسجيل الكلام وتحويله إلى نص" title="ابدأ تسجيل الكلام وتحويله إلى نص"><span class="tool-symbol" aria-hidden="true">🎙️</span><span class="tool-label">تسجيل</span></button>
               <button class="send-btn" id="sendBtn" type="submit" disabled aria-label="إرسال"><svg viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button>
             </div>
           </div>

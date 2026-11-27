@@ -282,3 +282,30 @@ button:focus-visible, textarea:focus-visible { outline: 3px solid color-mix(in s
 .install-action:hover { filter: brightness(1.08); }
 .install-action:disabled { opacity: .65; cursor: default; }
 .install-action.install-ready { box-shadow: 0 4px 12px rgba(112,88,222,.2); }
+
+
+/* Clear, touch-friendly actions for attachments and speech on mobile. */
+.labeled-tool { width: auto; min-width: 66px; padding: 0 9px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; font-family: "IBM Plex Sans Arabic", sans-serif; font-size: 12px; }
+.tool-symbol { font-size: 19px; line-height: 1; }
+.tool-label { font-size: 10px; font-weight: 600; white-space: nowrap; }
+.mic-tool.recording { min-width: 76px; }
+.recording-status { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; padding: 9px 11px; margin: 0 0 8px; border: 1px solid rgba(210,70,85,.24); border-radius: 11px; background: rgba(220,70,85,.07); color: var(--text); font-size: 11px; }
+.recording-status[hidden] { display: none !important; }
+.recording-dot { width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; background: #d34b5a; box-shadow: 0 0 0 4px rgba(211,75,90,.12); animation: recordPulse 1.2s ease-in-out infinite; }
+.stop-recording-button { margin-inline-start: auto; border: 0; border-radius: 8px; padding: 7px 11px; background: #c83f50; color: white; font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; }
+.install-top-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-soft); color: var(--text); font: 600 10px "IBM Plex Sans Arabic", sans-serif; cursor: pointer; white-space: nowrap; }
+.install-top-button span { font: 700 18px "DM Sans", sans-serif; }
+.install-top-button:hover, .install-top-button.install-ready { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.install-top-button:disabled { opacity: .7; cursor: default; }
+@media (max-width: 650px) {
+  .composer-bottom { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .composer-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; gap: 8px; }
+  .composer-actions .enter-hint { margin-inline-start: auto; font-size: 8px; }
+  .labeled-tool { min-width: 76px; min-height: 38px; padding: 0 11px; }
+  .tool-label { font-size: 11px; }
+  .design-status { display: none; }
+  .install-top-button { width: auto; min-width: 68px; height: 34px; padding: 0 8px; border-radius: 10px; }
+  .install-top-button b { display: inline; font-size: 10px; }
+  .install-top-button span { font-size: 17px; }
+  .recording-status { font-size: 10px; }
+}

@@ -1,58 +1,66 @@
 (() => {
   'use strict';
-
-  const installButton = document.getElementById('installAppBtn');
-  if (!installButton) return;
+  const installButtons = [...document.querySelectorAll('#installAppBtn, #installTopBtn')];
+  if (!installButtons.length) return;
 
   let installPrompt = null;
   const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const notify = message => window.dispatchEvent(new CustomEvent('inno-pwa-toast', { detail: message }));
+  const setButtons = (label, disabled = false) => installButtons.forEach(button => {
+    if (button.id === 'installTopBtn') {
+      const labelNode = button.querySelector('b');
+      if (labelNode) labelNode.textContent = label === 'تثبيت التطبيق' ? 'تثبيت' : label;
+    } else {
+      button.textContent = label;
+    }
+    button.disabled = disabled;
+  });
 
-  window.addEventListener('beforeinstallprompt', (event) => {
+  window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault();
     installPrompt = event;
-    installButton.classList.add('install-ready');
-    installButton.textContent = 'تثبيت التطبيق';
+    installButtons.forEach(button => button.classList.add('install-ready'));
+    setButtons('تثبيت التطبيق');
   });
 
   window.addEventListener('appinstalled', () => {
     installPrompt = null;
-    installButton.textContent = 'تم التثبيت';
-    installButton.disabled = true;
-    window.dispatchEvent(new CustomEvent('inno-pwa-toast', { detail: 'تم تثبيت Inno Code على جهازك.' }));
+    setButtons('تم التثبيت', true);
+    notify('تم تثبيت Inno Code على جهازك.');
   });
 
-  installButton.addEventListener('click', async () => {
-    if (isStandalone()) {
-      window.dispatchEvent(new CustomEvent('inno-pwa-toast', { detail: 'Inno Code مثبت بالفعل على جهازك.' }));
-      return;
-    }
-
+  async function installApp() {
+    if (isStandalone()) { notify('Inno Code مثبت بالفعل على جهازك.'); return; }
     if (installPrompt) {
-      installPrompt.prompt();
-      const result = await installPrompt.userChoice.catch(() => ({ outcome: 'dismissed' }));
-      if (result.outcome === 'accepted') {
-        window.dispatchEvent(new CustomEvent('inno-pwa-toast', { detail: 'بدأ تثبيت Inno Code على جهازك.' }));
-      }
-      installPrompt = null;
+      try {
+        await installPrompt.prompt();
+        const result = await installPrompt.userChoice;
+        if (result?.outcome === 'accepted') notify('بدأ تثبيت Inno Code على جهازك.');
+        else notify('لم يتم التثبيت. تقدر تجرب مرة ثانية من زر تثبيت التطبيق.');
+      } catch {
+        notify('لم تظهر نافذة التثبيت. افتح قائمة المتصفح واختر «تثبيت التطبيق».');
+      } finally { installPrompt = null; }
       return;
     }
 
     const ua = navigator.userAgent || '';
     let message;
     if (/iPhone|iPad|iPod/i.test(ua)) {
-      message = 'على iPhone أو iPad: افتح الموقع في Safari، واضغط مشاركة، ثم «إضافة إلى الشاشة الرئيسية»، وبعدها اضغط «إضافة». ';
+      message = 'لتثبيت Inno Code على iPhone: افتح الموقع في Safari، واضغط مشاركة، ثم «إضافة إلى الشاشة الرئيسية»، وبعدها اضغط «إضافة».';
     } else if (/Android/i.test(ua)) {
-      message = 'على Android: افتح الموقع في Chrome، واضغط قائمة ⋮، ثم اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية». ';
+      message = 'لتثبيت Inno Code على Android: افتح الموقع في Chrome، واضغط قائمة ⋮، ثم اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».';
     } else {
-      message = 'افتح قائمة المتصفح وابحث عن «تثبيت التطبيق» أو «Install app». ';
+      message = 'افتح قائمة المتصفح وابحث عن «تثبيت التطبيق» أو «Install app». يجب أن يكون الموقع مفتوحًا برابط HTTPS.';
     }
-    window.dispatchEvent(new CustomEvent('inno-pwa-toast', { detail: message }));
-  });
+    notify(message);
+  }
+
+  installButtons.forEach(button => button.addEventListener('click', installApp));
 
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
-        .catch((error) => console.warn('Inno Code offline shell registration failed:', error));
+        .catch(error => console.warn('Inno Code shell registration failed:', error));
     });
   }
 })();

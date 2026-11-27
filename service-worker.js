@@ -1,5 +1,5 @@
 /* Inno Code PWA shell cache. API requests are intentionally never cached. */
-const CACHE_NAME = 'inno-code-shell-v1';
+const CACHE_NAME = 'inno-code-shell-v2';
 const APP_SHELL = [
   '/',
   '/index.html',
