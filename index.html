@@ -2,8 +2,17 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f8f9fc" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Inno Code" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="application-name" content="Inno Code" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/assets/icon-512.png" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <meta name="description" content="Inno Code — مساعدك الذكي بالكتابة." />
   <title>Inno Code</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +26,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-head">
         <a class="brand" href="#" aria-label="Inno Code home">
-          <span class="brand-logo"><span>IN</span><i></i></span>
+          <span class="brand-logo"><img src="/assets/inno-mark.jpeg" alt="Inno Code" /></span>
           <span class="brand-wordmark">Inno<span>Code</span></span>
         </a>
         <button class="icon-btn sidebar-collapse" id="closeSidebar" aria-label="إغلاق القائمة" title="إغلاق">×</button>
@@ -60,7 +69,7 @@
       <header class="topbar">
         <div class="topbar-leading">
           <button class="icon-btn mobile-menu" id="openSidebar" aria-label="فتح القائمة">☰</button>
-          <div class="mobile-wordmark"><span class="mini-logo">IN</span> Inno Code</div>
+          <div class="mobile-wordmark"><img class="mini-logo" src="/assets/inno-mark.jpeg" alt="" /> Inno Code</div>
           <button class="model-switch" id="modelSwitch" aria-label="اختيار المساعد">
             <span class="model-glyph">✳</span><span>Inno AI</span><span class="model-chevron">⌄</span>
           </button>
@@ -73,7 +82,7 @@
 
       <section class="conversation" id="conversation">
         <div class="welcome" id="welcome">
-          <div class="welcome-orb"><span class="orb-logo">IN</span><span class="orb-spark">✦</span></div>
+          <div class="welcome-orb"><img class="orb-logo" src="/assets/inno-mark.jpeg" alt="Inno Code" /><span class="orb-spark">✦</span></div>
           <div class="welcome-eyebrow">YOUR IDEAS, IN MOTION</div>
           <h1>أهلاً بيك في <span>Inno Code</span></h1>
           <p class="welcome-copy">مساحة ذكية لأفكارك. ابدأ بسؤال، أو احكيلي إيه اللي في دماغك.</p>
@@ -96,7 +105,7 @@
               <span class="suggestion-text"><strong>طلّع أفكار جديدة</strong><small>إلهام وزوايا مختلفة</small></span><span class="suggestion-arrow">↗</span>
             </button>
           </div>
-          <div class="welcome-note"><span>✧</span> مساعد كتابة فقط — بدون صوت أو ميكروفون</div>
+          <div class="welcome-note"><span>✧</span> اسأل، ارفع صورة أو ملف، أو استخدم الميكروفون لتحويل كلامك إلى نص</div>
         </div>
 
         <div class="messages" id="messages" aria-live="polite"></div>
@@ -104,10 +113,25 @@
 
       <footer class="composer-wrap">
         <form class="composer" id="chatForm">
+          <div class="attachment-tray" id="attachmentTray" hidden></div>
           <textarea id="messageInput" rows="1" maxlength="12000" placeholder="اكتب رسالتك لـ Inno Code..." aria-label="اكتب رسالتك"></textarea>
           <div class="composer-bottom">
-            <div class="composer-meta"><span class="text-only"><span>✦</span> كتابة فقط</span><span class="meta-divider"></span><span class="privacy-label">مساحة خاصة لأفكارك</span></div>
-            <div class="composer-actions"><span class="enter-hint">Enter للإرسال · Shift + Enter لسطر جديد</span><button class="send-btn" id="sendBtn" type="submit" disabled aria-label="إرسال"><svg viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button></div>
+            <div class="composer-meta"><span class="text-only"><span>✦</span> مساعدك الذكي</span><span class="meta-divider"></span><span class="privacy-label">المرفقات تُرسل إلى Gemini لتحليلها</span></div>
+            <div class="composer-actions">
+              <span class="enter-hint">Enter للإرسال · Shift + Enter لسطر جديد</span>
+              <div class="attachment-tools">
+                <button class="tool-btn" id="attachButton" type="button" aria-label="إضافة مرفق" title="إضافة صورة أو ملف">＋</button>
+                <div class="attachment-menu" id="attachmentMenu" hidden>
+                  <button type="button" data-file-kind="image">🖼️ رفع صورة</button>
+                  <button type="button" data-file-kind="pdf">📕 رفع PDF</button>
+                  <button type="button" data-file-kind="text">📄 رفع ملف نصي أو كود</button>
+                  <button type="button" data-file-kind="all">📎 أنواع الملفات المدعومة</button>
+                </div>
+              </div>
+              <input id="fileInput" type="file" hidden multiple />
+              <button class="tool-btn" id="micButton" type="button" aria-label="تحويل الكلام إلى نص" title="تحويل الكلام إلى نص">🎙️</button>
+              <button class="send-btn" id="sendBtn" type="submit" disabled aria-label="إرسال"><svg viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button>
+            </div>
           </div>
         </form>
         <p class="footer-disclaimer">Inno Code ممكن يخطئ أحيانًا. راجع المعلومات المهمة قبل الاعتماد عليها.</p>
@@ -124,12 +148,22 @@
           <button class="theme-choice" data-theme-choice="dark"><span class="theme-thumb dark-thumb"><i></i><b></b></span><strong>داكن</strong><span class="choice-check">✓</span></button>
         </div>
       </div>
-      <div class="settings-block info-block"><div class="settings-info-icon">✦</div><div><strong>Inno Code — اتصال آمن</strong><p>مفتاح API بيتحفظ كمتغير سري على Vercel، ومش بيتحط في كود المتصفح.</p></div></div>
+      <div class="settings-block install-block">
+        <div class="settings-info-icon">↓</div>
+        <div class="install-copy">
+          <strong>ثبّت Inno Code على الموبايل</strong>
+          <p>أضف التطبيق إلى الشاشة الرئيسية وافتحه في نافذة مستقلة مثل التطبيقات العادية.</p>
+          <button class="install-action" id="installAppBtn" type="button">تثبيت التطبيق</button>
+        </div>
+      </div>
+      <div class="settings-block info-block"><div class="settings-info-icon">✦</div><div><strong>Inno Code — اتصال آمن</strong><p>مفتاح Gemini محفوظ كمتغير سري على Vercel. الميكروفون وقراءة الردود يستخدمان خدمات المتصفح.</p></div></div>
+      <div class="settings-block info-block"><div class="settings-info-icon">◎</div><div><strong>توليد الصور بالذكاء الاصطناعي</strong><p>غير مفعّل حاليًا. لن يتم تشغيل أي نموذج صور مدفوع إلا بعد موافقتك الصريحة.</p></div></div>
       <div class="settings-footer"><button class="clear-btn" id="clearChats">مسح المحادثات</button><button class="done-btn" id="doneSettings">تم</button></div>
     </section>
   </div>
 
   <div class="toast" id="toast" role="status"></div>
   <script src="/assets/app.js"></script>
+  <script src="/assets/pwa.js"></script>
 </body>
 </html>

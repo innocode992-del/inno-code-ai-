@@ -1,7 +1,19 @@
-ارفع محتويات هذا المجلد إلى جذر مستودع GitHub المرتبط بـ Vercel.
-ثم في Vercel: Settings > Environment Variables أضف:
-OPENAI_API_KEY = مفتاحك السري
-OPENAI_MODEL = gpt-6.2-sol
-احفظ ثم اعمل Redeploy لآخر Deployment.
-لا تشغّل أي ملف BAT، ولا تضع المفتاح في ملفات HTML أو JavaScript.
-راجع README-AR.md للتفاصيل والتنبيه الأمني قبل مشاركة الموقع.
+تحديث Inno Code على Vercel
+
+1) ارفع محتويات هذا المجلد إلى جذر مستودع GitHub المرتبط بـ Vercel، مع الحفاظ على مجلدي api وassets.
+2) لا ترفع ملف .env الحقيقي ولا أي مفتاح API.
+3) في Vercel افتح Project Settings > Environment Variables.
+4) تأكد من وجود:
+   GEMINI_API_KEY = مفتاح Gemini الحالي
+   GEMINI_MODEL = gemini-3.8-flash (اختياري، استخدم القيمة الحالية الموجودة عندك إن كانت مختلفة)
+5) بعد Commit وPush، انتظر Deployment التلقائي حتى يظهر Ready.
+6) اختبر /api/status ثم افتح الموقع وجرب رسالة نصية، وبعدها جرّب صورة صغيرة وملف PDF.
+
+لا يوجد نموذج مدفوع جديد لتوليد الصور مفعّل في هذا التحديث. لا تضف أي مفاتيح أخرى.
+
+
+تثبيت Inno Code كتطبيق على الموبايل:
+- ارفع جميع الملفات الجديدة كما هي، خصوصًا manifest.webmanifest وservice-worker.js ومجلد assets الذي يحتوي على أيقونات PNG وpwa.js.
+- بعد ظهور Deployment بحالة Ready، افتح رابط HTTPS على Android باستخدام Chrome، ثم اختر «تثبيت التطبيق» من إعدادات Inno Code أو من قائمة Chrome.
+- على iPhone/iPad افتح الرابط في Safari ثم مشاركة > إضافة إلى الشاشة الرئيسية > إضافة.
+- واجهة التطبيق الأساسية يمكن أن تُفتح من الذاكرة المؤقتة، لكن المحادثة مع Gemini تحتاج اتصال إنترنت.
